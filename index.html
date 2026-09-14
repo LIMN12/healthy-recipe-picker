@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TodoList - 大学生待办</title>
+  <style>
+    /* 用系统字体栈，避免 file:// 协议下加载外部字体跨域报错 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                   "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 24px;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 720px;
+      width: 100%;
+    }
+
+    /* 大大的 TodoList 标识 */
+    .title {
+      font-size: clamp(48px, 12vw, 128px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      line-height: 1.1;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    /* 标题下的小横线点缀 */
+    .divider {
+      width: 64px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 2px;
+      margin: 24px auto;
+    }
+
+    /* 励志语 */
+    .slogan {
+      font-size: clamp(16px, 3vw, 22px);
+      font-weight: 500;
+      letter-spacing: 2px;
+      opacity: 0.95;
+    }
+
+    /* 后续阶段放待办列表的占位容器 */
+    #todo-area {
+      margin-top: 48px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">TodoList</h1>
+    <div class="divider"></div>
+    <p class="slogan">不甘于平庸，就要拿出些本事来</p>
+
+    <!-- 后续阶段在这里填充：课表时间块、待办输入框、列表等 -->
+    <div id="todo-area"></div>
+  </div>
+</body>
+</html>
