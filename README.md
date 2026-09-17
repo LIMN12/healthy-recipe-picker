@@ -2,6 +2,8 @@
 
 一个零依赖的随机菜谱小应用，用于快速决定今天吃什么。
 
+![Healthy Recipe Picker 界面截图](docs/screenshot.png)
+
 ## 功能
 
 - 内置 10 道减脂友好菜谱
