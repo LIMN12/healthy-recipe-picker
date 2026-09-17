@@ -315,6 +315,45 @@
       display: inline-block;
     }
 
+    /* Goal planning */
+    .goal-box {
+      background: var(--blue-bg);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 8px;
+    }
+    .plan-preview {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.7;
+      display: none;
+    }
+    .plan-preview.show { display: block; }
+    .plan-preview .summary {
+      font-weight: 600;
+      color: var(--blue-1);
+      margin-bottom: 6px;
+    }
+    .plan-preview ul {
+      list-style: none;
+      padding: 0;
+    }
+    .plan-preview li {
+      padding: 3px 0;
+      color: var(--ink-soft);
+      font-size: 12.5px;
+    }
+    .plan-preview li::before {
+      content: "▸ ";
+      color: var(--study-color);
+    }
+
     @media (max-width: 600px) {
       .result-grid { grid-template-columns: 1fr; }
       .field input.w-name { width: 140px; }
@@ -382,6 +421,33 @@
       <div class="item-list" id="taskList">
         <div class="item empty">暂无自学任务</div>
       </div>
+
+      <!-- Goal planning -->
+      <div class="section-title"><span class="dot" style="background:var(--leisure-color)"></span>目标规划 · 自动生成任务</div>
+      <div class="goal-box">
+        <div class="input-row">
+          <div class="field" style="flex:1; min-width:200px;">
+            <label>我的现状</label>
+            <input type="text" id="currentStatus" placeholder="如：四级380分，词汇薄弱">
+          </div>
+          <div class="field" style="flex:1; min-width:200px;">
+            <label>想达成的目标</label>
+            <input type="text" id="goalTarget" placeholder="如：3个月内四级考到500分">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="field">
+            <label>截止日期</label>
+            <input type="date" id="deadline" class="w-small">
+          </div>
+          <div class="field">
+            <label>每天可投入（小时）</label>
+            <input type="number" id="dailyHours" value="2" min="0.5" step="0.5" class="w-num">
+          </div>
+          <button class="btn btn-primary" onclick="generatePlan()">🎯 生成并添加任务</button>
+        </div>
+        <div class="plan-preview" id="planPreview"></div>
+      </div>
     </div>
 
     <!-- Calculate -->
@@ -439,6 +505,12 @@
       const wk = ['日','一','二','三','四','五','六'];
       const txt = `📅 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${wk[d.getDay()]}`;
       document.getElementById('dateBar').textContent = txt;
+
+      // 默认截止日期 = 30 天后
+      const dl = new Date(d);
+      dl.setDate(dl.getDate() + 30);
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('deadline').value = `${dl.getFullYear()}-${pad(dl.getMonth()+1)}-${pad(dl.getDate())}`;
     })();
 
     // ---------- Helpers ----------
@@ -522,6 +594,72 @@
           <button class="btn btn-danger" onclick="removeTask('${t.id}')">删除</button>
         </div>
       `).join('');
+    }
+
+    // ---------- Goal planning: auto-generate tasks ----------
+    function generatePlan() {
+      const status = document.getElementById('currentStatus').value.trim();
+      const goal = document.getElementById('goalTarget').value.trim();
+      const deadline = document.getElementById('deadline').value;
+      const daily = parseFloat(document.getElementById('dailyHours').value) || 2;
+
+      if (!goal) { alert('请输入想达成的目标'); return; }
+      if (!deadline) { alert('请选择截止日期'); return; }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dl = new Date(deadline);
+      const days = Math.ceil((dl - today) / (1000 * 60 * 60 * 24));
+      if (days <= 0) { alert('截止日期需晚于今天'); return; }
+
+      const totalHours = Math.round(days * daily * 100) / 100;
+
+      // 根据可用天数拆分阶段
+      let phases;
+      if (days <= 7) {
+        phases = [
+          { name: '快速梳理', ratio: 0.5, tasks: [`${goal}·核心知识点速览`, `${goal}·薄弱项集中突破`] },
+          { name: '冲刺模考', ratio: 0.5, tasks: [`${goal}·模拟测试与错题复盘`] }
+        ];
+      } else if (days <= 30) {
+        phases = [
+          { name: '基础巩固', ratio: 0.35, tasks: [`${goal}·基础知识系统梳理`, `${goal}·核心考点笔记整理`] },
+          { name: '强化训练', ratio: 0.40, tasks: [`${goal}·专项练习`, `${goal}·错题集归纳`] },
+          { name: '冲刺模考', ratio: 0.25, tasks: [`${goal}·全真模拟测试`, `${goal}·考前查漏补缺`] }
+        ];
+      } else {
+        phases = [
+          { name: '基础巩固', ratio: 0.30, tasks: [`${goal}·基础知识系统学习`, `${goal}·核心概念笔记`] },
+          { name: '强化训练', ratio: 0.30, tasks: [`${goal}·专项突破练习`, `${goal}·薄弱项攻坚`] },
+          { name: '真题/实战', ratio: 0.25, tasks: [`${goal}·真题/项目实战`, `${goal}·错题深度复盘`] },
+          { name: '冲刺模考', ratio: 0.15, tasks: [`${goal}·全真模拟`, `${goal}·考前回顾`] }
+        ];
+      }
+
+      // 按比例分配时长，生成任务并加入自学列表
+      const newTasks = [];
+      phases.forEach(p => {
+        const phaseHours = totalHours * p.ratio;
+        const perTask = Math.max(0.25, Math.round((phaseHours / p.tasks.length) * 4) / 4);
+        p.tasks.forEach(t => {
+          newTasks.push({ id: uid(), name: `[${p.name}] ${t}`, hours: perTask });
+        });
+      });
+
+      state.tasks.push(...newTasks);
+      renderTasks();
+
+      // 预览面板
+      const preview = document.getElementById('planPreview');
+      preview.classList.add('show');
+      preview.innerHTML = `
+        <div class="summary">✅ 已生成 ${newTasks.length} 个任务 · 共 ${fmt(totalHours)}h（${days}天 × ${daily}h/天），已加入自学列表</div>
+        ${status ? `<div style="color:var(--ink-soft);font-size:12.5px;">现状：${status}</div>` : ''}
+        <ul>${newTasks.map(t => `<li>${t.name} · ${fmt(t.hours)}h</li>`).join('')}</ul>
+      `;
+
+      // 自动滚动到预览
+      preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     // ---------- Calculate ----------
