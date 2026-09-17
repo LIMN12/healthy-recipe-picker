@@ -4,6 +4,8 @@
 
 ![Healthy Recipe Picker 界面截图](docs/screenshot.png)
 
+**在线演示：** https://limn12.github.io/healthy-recipe-picker/
+
 ## 功能
 
 - 内置 10 道减脂友好菜谱
